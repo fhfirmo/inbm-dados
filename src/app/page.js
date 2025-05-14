@@ -4,17 +4,6 @@ import AccessButton from "../components/AccessButton";
 export default function Home() {
   return (
     <div className="container">
-      <div style={{ backgroundColor: '#00008B', padding: '10px', textAlign: 'center' }}>
-        <Image
-          src="https://firmoconsultoria.com.br/inbm/Inbm_02_logo.svg"
-          alt="Application Logo"
-          width={200} 
-          height={100} 
- style={{ objectFit: 'contain', width: 'auto' }}
-          priority
-        />
-      </div>
-
       <main className="main-content">
         <Image
           src="https://firmoconsultoria.com.br/inbm/img/bg-inbm.jpg" 

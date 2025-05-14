@@ -17,6 +17,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
+      // Check authentication state
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Supabase session in dashboard:', session);
+
+      // ... rest of your fetch logic
+
       // Fetch Total Clients (Placeholder)
       const { count: clientCount, error: clientError } = await supabase
         .from('Client')
@@ -29,11 +35,11 @@ export default function DashboardPage() {
 
       // Fetch New Clients (Placeholder - Last 30 days)
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      // Assuming Client table has a creation timestamp like 'data_criacao'
+      // Assuming Client table has a creation timestamp like 'data_cadastro'
       const { count: newClientCount, error: newClientError } = await supabase
         .from('Client')
         .select('*', { count: 'exact', head: true })
-        .gte('data_criacao', thirtyDaysAgo); // Placeholder query, adjust based on your schemagit
+        .gte('data_cadastro', thirtyDaysAgo);
  if (newClientError) {
  setError(newClientError);
       } else {

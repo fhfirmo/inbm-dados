@@ -12,21 +12,25 @@ export default function LoginPage({}) {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // Added async here
     e.preventDefault();
     // Handle login logic here
-    const { user, error } = supabase.auth.signInWithPassword({
- email,
- password,
+    const { data, error } = await supabase.auth.signInWithPassword({ // Added await and changed to data, error
+      email,
+      password,
     });
 
     if (error) {
       console.error('Login error:', error.message);
       // You might want to display an error message to the user here
-    } else {
-      console.log('Login successful!');
+    } else if (data && data.user) { // Check for both data and data.user
+      console.log('Login successful!', data.user); // Log the user object
       // Redirect to the dashboard or another protected page
       window.location.href = '/dashboard'; // Simple client-side redirect
+    } else {
+      // Handle cases where there's no error but also no user in the data
+      console.error('Login failed: No user returned.');
+      // Display a generic login failed message
     }
   };
   return (
