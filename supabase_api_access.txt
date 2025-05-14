@@ -1,0 +1,88 @@
+Securely Accessing the Supabase API
+
+This document outlines the recommended practices for accessing your Supabase database and authentication API from different types of applications, focusing on security.
+
+1. Supabase API Keys
+
+Supabase provides two main API keys:
+
+*   `SUPABASE_ANON_KEY`: This is the public key. It's safe to use in your frontend applications. It grants anonymous access to your database, but is subject to your Row Level Security (RLS) policies.
+*   `SUPABASE_SERVICE_ROLE_KEY`: This is the private key with elevated privileges. It bypasses RLS. **NEVER expose this key in your frontend code.** It should only be used in trusted environments like your backend server.
+
+2. Accessing the API from Backend Applications (Server-Side)
+
+For backend applications (e.g., a Node.js server, API routes in Next.js), you should use environment variables to store your Supabase API keys.
+
+*   **Importance of Environment Variables:** Storing keys directly in your codebase and committing them to version control is a major security risk. Environment variables keep your sensitive information separate from your code, making it easier to manage and protect.
+*   **Accessing Variables:** In Node.js, you can access environment variables using `process.env.<VARIABLE_NAME>`.
+
+    Example (Node.js):
+    
+```javascript
+const { createClient } = require('@supabase/supabase-js');
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key in backend
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    async function getUsers() {
+      const { data, error } = await supabase.from('DbUser').select('*');
+      if (error) console.error('Error fetching users:', error);
+      else console.log('Users:', data);
+    }
+
+    getUsers();
+```
+
+*   **Configuration:** Configure your environment variables in your server's deployment environment (e.g., Vercel, Netlify, AWS, Heroku). Do not commit a file containing your keys (like a `.env` file) to your Git repository. If you use a `.env` file for local development, make sure to add it to your `.gitignore`.
+
+3. Accessing the API from Frontend Applications (Web or Mobile)
+
+For frontend applications, you should **only** use the `SUPABASE_ANON_KEY`.
+
+*   **Danger of Exposing `SUPABASE_SERVICE_ROLE_KEY`:** Exposing the `service_role_key` in your frontend code would grant anyone who inspects your code full administrative access to your Supabase database, bypassing all your RLS policies.
+*   **Using Frontend Environment Variables:** Frontend frameworks often have specific ways to handle environment variables that are exposed to the client-side build. These variables usually have a specific prefix (e.g., `NEXT_PUBLIC_` in Next.js, `VITE_` in Vite). Use these for your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+
+    Example (Next.js):
+    
+```javascript
+import { createClient } from '@supabase/supabase-js';
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; // Use anon key in frontend
+
+    export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+
+*   **Important:** Ensure that your `service_role_key` is not included in your frontend build process.
+
+4. Architecture with an Intermediate Backend
+
+It is often recommended to create your own backend server to act as an intermediary between your frontend and Supabase, especially for operations that require the `service_role_key` or involve sensitive logic that you don't want to expose on the client-side.
+
+*   **When to Use:** Consider an intermediate backend for:
+    *   Performing operations that require bypassing RLS (using the `service_role_key`).
+    *   Implementing complex business logic.
+    *   Integrating with other APIs or services.
+    *   Handling payments or other sensitive operations.
+*   **How it Works:**
+    *   The frontend makes API calls to your intermediate backend.
+    *   Your intermediate backend, running in a trusted server environment, uses the `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to interact with Supabase.
+    *   The intermediate backend then returns the results to the frontend.
+*   **Benefits:**
+    *   Protects your `service_role_key`.
+    *   Allows you to centralize sensitive logic.
+    *   Provides an additional layer of security and control.
+*   **Communication:** The frontend communicates with the intermediate backend using standard HTTP requests (e.g., REST APIs, GraphQL).
+
+5. General Best Practices for Securing Supabase API Credentials
+
+*   **Never Expose `service_role_key` in Frontend:** This is the most critical rule.
+*   **Use Environment Variables in Backend:** Store your keys securely outside of your codebase.
+*   **Implement Security in Intermediate Backend:** If you use an intermediate backend, ensure it has proper authentication, authorization, and input validation to protect against malicious requests.
+*   **Review RLS Policies Regularly:** Your RLS policies are your primary defense for data security. Regularly review and update them to ensure they align with your application's access control requirements.
+*   **Monitor Key Usage:** Keep an eye on your Supabase usage metrics to detect any unusual activity that might indicate a compromised key.
+*   **Consider Key Rotation:** Periodically rotate your API keys, especially the `service_role_key`, to minimize the impact of a potential leak.
+
+By following these guidelines, you can significantly enhance the security of your Supabase integration and protect your data.
